@@ -14,6 +14,7 @@ import java.util.PriorityQueue;
 
 public class Tokenizer {
 
+
     Path filePath;
     Map<String, Integer> lexicon;
 
@@ -39,9 +40,7 @@ public class Tokenizer {
                     cleanLine += token + " ";
                 }
             }
-            if (!cleanLine.isBlank()) {
-                writeLine(cleanLine.trim());
-            }
+           
         }
 
         fis.close();
@@ -68,33 +67,7 @@ public class Tokenizer {
         return true;
     }
 
-    private void writeLine(String line) {
-        final int LINES_PER_FILE = 5000;
-        final int FILES_PER_DIR = 10;
-        final String OUTPUT_ROOT = ".\\output";
 
-        try {
-            if (Holder.writer == null || Holder.linesWritten >= LINES_PER_FILE) {
-                if (Holder.writer != null) {
-                    Holder.writer.close();
-                }
-                Holder.linesWritten = 0;
-                if (Holder.filesWritten >= FILES_PER_DIR || Holder.writer == null) {
-                    Holder.filesWritten = 0;
-                    File dir = new File(OUTPUT_ROOT, "dir" + Holder.dirIndex++);
-                    dir.mkdirs();
-                }
-                File file = new File(OUTPUT_ROOT + File.separator + "dir" + (Holder.dirIndex - 1),
-                        "file" + Holder.filesWritten++ + ".txt");
-                Holder.writer = new BufferedWriter(new FileWriter(file));
-            }
-            Holder.writer.write(line);
-            Holder.writer.newLine();
-            Holder.linesWritten++;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     private void pruneLexicon() throws IOException {
         int k = 50000;
@@ -122,9 +95,13 @@ public class Tokenizer {
     private void revealLexicon() throws IOException {
         BufferedWriter bw = new BufferedWriter(new FileWriter("tokens.txt"));
         for (Map.Entry<String, Integer> entry : lexicon.entrySet()) {
+            System.out.println(entry.getKey());
             bw.write(entry.getKey() + ": " + entry.getValue());
             bw.newLine();
         }
+
+        bw.flush();
+        bw.close();
     }
 
     public static void main(String[] args) throws IOException {

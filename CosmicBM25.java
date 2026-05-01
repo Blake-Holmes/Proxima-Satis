@@ -33,7 +33,7 @@ public class CosmicBM25 extends JFrame {
     JLabel       statusLabel;
 
     public CosmicBM25() {
-        super("◈  NEXUS-BM25  ◈  CORPUS SEARCH ENGINE");
+        super("◈  Proxima-Satis  ◈  CORPUS SEARCH ENGINE");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(980, 720);
         setMinimumSize(new Dimension(780, 540));
@@ -87,7 +87,7 @@ public class CosmicBM25 extends JFrame {
             }
         };
         p.setOpaque(false); p.setBorder(BorderFactory.createEmptyBorder(18,36,14,36));
-        JLabel t=new JLabel("◈  N E X U S - B M 2 5");
+        JLabel t=new JLabel("◈  P R O X I M A - S A T I S" );
         t.setFont(new Font("Courier New",Font.BOLD,26)); t.setForeground(CYAN);
         JLabel s=new JLabel("DEEP CORPUS RETRIEVAL  //  OKAPI ENGINE");
         s.setFont(new Font("Courier New",Font.PLAIN,11)); s.setForeground(TEXT_DIM);
