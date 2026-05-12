@@ -16,16 +16,15 @@ public class Tokenizer {
 
 
     Path filePath;
-    Map<String, Integer> lexicon;
+    HashMap<String, Integer> lexicon;
 
-    public Tokenizer(String path) throws IOException {
-        this.filePath = Paths.get(path); //   or:    .\\Wet\\CC-MAIN-20260206181458-20260206211458-00001.warc.wet
+    public Tokenizer() throws IOException {
+        //this.filePath = Paths.get(path); //   or:    .\\Wet\\CC-MAIN-20260206181458-20260206211458-00001.warc.wet
         this.lexicon = new HashMap<>();
-        parse();
     }
 
-    private void parse() throws IOException {
-        FileInputStream fis = new FileInputStream(filePath.toFile());
+    public void parse(String path) throws IOException {
+        FileInputStream fis = new FileInputStream(path);
         InputStreamReader isr = new InputStreamReader(fis);
         BufferedReader br = new BufferedReader(isr);
 
@@ -67,12 +66,17 @@ public class Tokenizer {
         return true;
     }
 
+    public HashMap<String, Integer> getLex(){
 
+         HashMap<String, Integer> temp = this.lexicon;
+         this.lexicon = new HashMap<String, Integer>();
+         return temp;
+    }
 
     private void pruneLexicon() throws IOException {
         int k = 50000;
-        PriorityQueue<Map.Entry<String, Integer>> heap = new PriorityQueue<>((a, b) -> a.getValue() - b.getValue());
-        for (Map.Entry<String, Integer> entry : lexicon.entrySet()) {
+        PriorityQueue<HashMap.Entry<String, Integer>> heap = new PriorityQueue<>((a, b) -> a.getValue() - b.getValue());
+        for (HashMap.Entry<String, Integer> entry : lexicon.entrySet()) {
             if (entry.getValue() < 5) {
                 continue;
             }
@@ -83,9 +87,9 @@ public class Tokenizer {
                 heap.add(entry);
             }
         }
-        Map<String, Integer> newLex = new HashMap<>();
+        HashMap<String, Integer> newLex = new HashMap<>();
         while (!heap.isEmpty()) {
-            Map.Entry<String, Integer> entry = heap.poll();
+            HashMap.Entry<String, Integer> entry = heap.poll();
             newLex.put(entry.getKey(), entry.getValue());
         }
         lexicon = newLex;
@@ -95,7 +99,7 @@ public class Tokenizer {
     private void revealLexicon() throws IOException {
         BufferedWriter bw = new BufferedWriter(new FileWriter("tokens.txt"));
         for (Map.Entry<String, Integer> entry : lexicon.entrySet()) {
-            System.out.println(entry.getKey());
+            //stem.out.println(entry.getKey());
             bw.write(entry.getKey() + ": " + entry.getValue());
             bw.newLine();
         }
@@ -105,12 +109,7 @@ public class Tokenizer {
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 1) {
-            System.err.println("Provide a folder of files.");
-            System.out.println("Usage: java Tokenizer <file_path>");
-            return;
-        }
 
-        Tokenizer t = new Tokenizer(args[0]);
+
     }
 }
