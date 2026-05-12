@@ -11,6 +11,7 @@ public class DataBase{
 
     int k;
     int b;
+    String[] query;
     HashMap<String, HashMap<String, Integer>> tokenMap;
     HashMap<String, HashMap<String, Integer>> invertedIndex;
 
@@ -34,6 +35,26 @@ public class DataBase{
         }
     }
 
+
+    public void getQuery(String search) throws IOException{
+        Tokenizer q = new Tokenizer();
+        HashMap<String, Integer> queryMap = new HashMap<String, Integer>();
+
+        if(search != null){
+            queryMap = q.parseQuery(search);
+        }
+
+        query = new String[queryMap.size()];
+        int i = 0;
+
+        for(String word: queryMap.keySet()){
+            System.out.println(word);
+            query[i] = word;
+            i++;
+        }
+
+    }
+
     public void buildDataBase() throws IOException{
 
         tokenMap = new HashMap<String, HashMap<String, Integer>>();
@@ -48,6 +69,7 @@ public class DataBase{
                 if (file.isFile()) {  // skip subdirectories
 
                     try{
+                    numDoc ++;
                     tok.parse(file.getPath());
                     tokenMap.put(file.getName(), tok.getLex());
                     } catch(IOException e){
@@ -101,6 +123,42 @@ public class DataBase{
 
         System.out.println();
         }
+
+
+
+    }
+
+
+    public double getIDF(String term){
+
+        // total number of docs
+        double N = this.numDoc;
+
+        //number of documents containing term
+        double dTerm = 0;
+        if(invertedIndex.get(term) != null){
+
+            dTerm = invertedIndex.get(term).size();
+
+        }
+
+
+
+
+        double idf = Math.log((N-dTerm +.5) / (dTerm + .5));
+
+
+
+        return idf;
+
+
+    }
+
+
+    public void getTF(String term){
+
+
+
     }
 
 
@@ -109,10 +167,11 @@ public class DataBase{
 
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
 
         DataBase data = new DataBase();
+        data.getQuery("HELLO World");
     }
 
 }
