@@ -28,6 +28,8 @@ public class HomeGui extends JFrame {
     ResultsPanel     resultsPanel;
     JLabel           statusLabel;
 
+    DataBase db;
+
     // ── Entry point ───────────────────────────────────────────────────────────
 
     public static void main(String[] args) {
@@ -45,6 +47,19 @@ public class HomeGui extends JFrame {
         initRain(980, 720);
         animTimer = new javax.swing.Timer(50, e -> { stepRain(); background.repaint(); });
         animTimer.start();
+        // Load real database in background so UI stays responsive
+        new SwingWorker<DataBase, Void>() {
+            protected DataBase doInBackground() { return new DataBase(); }
+            protected void done() {
+                try {
+                    db = get();
+                    statusLabel.setForeground(CYAN);
+                    statusLabel.setText("DATABASE LOADED  //  " + DataBase.numDoc + " DOCUMENTS INDEXED  //  AWAITING QUERY");
+                } catch (Exception ex) {
+                    statusLabel.setText("DB LOAD ERROR: " + ex.getMessage());
+                }
+            }
+        }.execute();
     }
 
     // ── UI construction ───────────────────────────────────────────────────────
@@ -118,12 +133,23 @@ public class HomeGui extends JFrame {
     void doSearch() {
         String query = searchField.getText().trim();
         if (query.isEmpty() || query.equals("ENTER QUERY VECTOR...")) return;
+        if (db == null) {
+            statusLabel.setForeground(CYAN_DIM);
+            statusLabel.setText("DATABASE STILL LOADING — PLEASE WAIT...");
+            return;
+        }
         statusLabel.setForeground(CYAN_DIM);
         statusLabel.setText("SCANNING CORPUS...  COMPUTING BM25 SCORES...");
         new SwingWorker<List<ResultRow>, Void>() {
             protected List<ResultRow> doInBackground() throws Exception {
-                Thread.sleep(400);
-                return runBM25(query);
+                db.getQuery(query);
+                java.util.HashMap<String, Double> scores = db.conductSearch();
+                List<ResultRow> rows = new ArrayList<>();
+                for (java.util.Map.Entry<String, Double> e : scores.entrySet()) {
+                    if (e.getValue() > 0.0) rows.add(new ResultRow(e.getKey(), e.getValue().floatValue()));
+                }
+                rows.sort((a, b) -> Float.compare(b.score, a.score));
+                return rows;
             }
             protected void done() {
                 try {
@@ -132,55 +158,38 @@ public class HomeGui extends JFrame {
                     statusLabel.setForeground(CYAN);
                     statusLabel.setText("RETRIEVED " + rows.size() + " DOCUMENTS  //  QUERY: [" + query.toUpperCase() + "]");
                 } catch (Exception ex) {
+                    statusLabel.setText("SEARCH ERROR: " + ex.getMessage());
                     ex.printStackTrace();
                 }
             }
         }.execute();
     }
 
-    List<ResultRow> runBM25(String query) {
-        String[] docs = {
-            "Quantum entanglement across galactic voids",
-            "Neutron star collapse and singularity formation",
-            "Dark matter filaments in the cosmic web",
-            "Gravitational lensing by supermassive black holes",
-            "Hawking radiation and information paradox",
-            "Baryonic matter distribution in deep field surveys",
-            "Interstellar medium near Sagittarius A-star",
-            "Primordial nucleosynthesis three minutes post-Bang",
-            "Exoplanet atmospheric spectroscopy via transit method",
-            "Cosmic microwave background anisotropy mapping",
-            "Magnetic reconnection in stellar corona plasma",
-            "Redshift surveys and large-scale structure formation"
-        };
-        String[]        tokens  = query.toLowerCase().split("\\s+");
-        List<ResultRow> results = new ArrayList<>();
-        for (String doc : docs) {
-            float score = scoreBM25(tokens, doc);
-            if (score > 0.01f) results.add(new ResultRow(doc, score));
-        }
-        results.sort((a, b) -> Float.compare(b.score, a.score));
-        if (results.isEmpty()) {
-            for (int i = 0; i < 4; i++)
-                results.add(new ResultRow(docs[rng.nextInt(docs.length)], 0.1f + rng.nextFloat() * 0.3f));
-        }
-        return results;
-    }
-
-    float scoreBM25(String[] tokens, String doc) {
-        String[] words = doc.toLowerCase().split("\\s+");
-        float score = 0, k1 = 1.2f, b = 0.75f;
-        for (String token : tokens) {
-            long tf = Arrays.stream(words).filter(w -> w.contains(token)).count();
-            if (tf == 0) continue;
-            score += (float) Math.log((12f + 1) / (tf + 0.5))
-                   * (tf * (k1 + 1)) / (tf + k1 * (1 - b + b * words.length / 7f));
-        }
-        return Math.max(0, score);
-    }
-
     void viewDatabase() {
-        System.out.println("[placeholder] View DataBase clicked");
+        if (db == null) {
+            JOptionPane.showMessageDialog(this, "Database is still loading, please wait.", "Not Ready", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("INDEXED DOCUMENTS (").append(DataBase.numDoc).append(" total)\n");
+        for (int i = 0; i < 60; i++) {
+            sb.append("─");
+        }
+        sb.append("\n\n");
+        int i = 1;
+        for (String docName : DataBase.tokenMap.keySet()) {
+            int termCount = DataBase.tokenMap.get(docName).size();
+            sb.append(String.format("%2d.  %-45s  [%d terms]\n", i++, docName, termCount));
+        }
+        JTextArea ta = new JTextArea(sb.toString());
+        ta.setFont(new Font("Courier New", Font.PLAIN, 13));
+        ta.setEditable(false);
+        ta.setBackground(new Color(0x07071A));
+        ta.setForeground(CYAN);
+        ta.setCaretColor(CYAN);
+        JScrollPane sp = new JScrollPane(ta);
+        sp.setPreferredSize(new Dimension(620, 360));
+        JOptionPane.showMessageDialog(this, sp, "◈  DATABASE CONTENTS", JOptionPane.PLAIN_MESSAGE);
     }
 
     void importDocuments() {
@@ -226,7 +235,17 @@ public class HomeGui extends JFrame {
     }
 
     void ingestFile(File file) {
-        System.out.println("[placeholder] Ingesting into database: " + file.getAbsolutePath());
+        if (db == null) return;
+        try {
+            Tokenizer tok = new Tokenizer();
+            tok.parse(file.getPath());
+            DataBase.tokenMap.put(file.getName(), tok.getLex());
+            DataBase.numDoc = DataBase.tokenMap.size();
+            DataBase.getTotalTokens();
+            db.buildInvertedIndex();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     // ── Matrix rain ───────────────────────────────────────────────────────────

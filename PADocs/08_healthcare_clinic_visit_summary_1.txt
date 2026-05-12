@@ -1,0 +1,12 @@
+CLINIC VISIT SUMMARY
+
+The patient reported fatigue, headache, and intermittent fever for three days.
+Vitals were taken, and the clinician reviewed medical history, medications, and
+recent travel. A rapid test was performed and basic labs were ordered.
+
+Plan: rest, hydration, and symptom management. Follow up if symptoms worsen,
+shortness of breath occurs, or fever persists beyond 48 hours. The clinician
+discussed preventive care, vaccination schedule, and sleep hygiene.
+
+Keywords: symptoms, diagnosis, labs, treatment plan, follow-up, hydration,
+medication, and prevention.

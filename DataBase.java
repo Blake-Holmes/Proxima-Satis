@@ -82,7 +82,7 @@ public class DataBase{
 
         tokenMap = new HashMap<String, HashMap<String, Integer>>();
 
-        File folder = new File("/home/jack/SearchProject/Proxima-Satis/PADocs");
+        File folder = new File("PADocs");
         File[] docs = folder.listFiles();
         Tokenizer tok = new Tokenizer();
 
@@ -265,7 +265,7 @@ public class DataBase{
 
 
         DataBase data = new DataBase();
-        data.getQuery(arg[0]);
+        data.getQuery(args[0]);
         data.conductSearch();
     }
 

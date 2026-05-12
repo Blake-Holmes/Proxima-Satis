@@ -1,0 +1,14 @@
+MACHINE LEARNING OVERVIEW
+
+A machine learning model learns patterns from data and uses those patterns to
+make predictions. Training data includes features (inputs) and labels (targets).
+During training, an algorithm minimizes a loss function to improve accuracy.
+
+Common methods include logistic regression, decision trees, gradient boosting,
+and neural networks. Evaluation often uses a test set, cross-validation, and
+metrics such as precision, recall, F1 score, and calibration. Overfitting occurs
+when a model performs well on training data but poorly on new data. Regularization,
+dropout, and early stopping help control overfitting.
+
+Practical concerns: data quality, bias, missing values, and feature engineering.
+In deployment, monitoring drift and retraining are part of the lifecycle.
