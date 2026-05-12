@@ -1,0 +1,14 @@
+CYBERSECURITY INCIDENT NOTES
+
+At 09:14 an employee reported suspicious email activity. The message looked like
+a routine invoice but contained a shortened link. Multiple recipients clicked
+the link and entered credentials. Indicators suggest a phishing campaign with
+credential harvesting.
+
+Actions taken: reset passwords, revoke sessions, and enable multi-factor
+authentication. Network logs were reviewed for unusual outbound connections.
+Endpoint scans found no ransomware, but browser tokens may have been exposed.
+
+Keywords for analysis: phishing, credentials, MFA, session revocation, logs,
+IOC (indicator of compromise), containment, remediation, and user awareness
+training.
