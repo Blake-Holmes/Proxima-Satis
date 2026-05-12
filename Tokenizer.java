@@ -53,14 +53,13 @@ public class Tokenizer {
         HashMap<String, Integer> queryMap = new HashMap<>();
            System.out.println(query);
         if (query != null && !query.trim().isEmpty()) {
-            System.out.println(query);
             String[] tokens = query.split("\\s+");
 
         for (String token : tokens) {
-            System.out.println(token);
+
             token = clean(token);
             if (isValidToken(token)) {
-                System.out.println(token);
+
                 queryMap.put(token, queryMap.getOrDefault(token, 0) + 1);
                 }
             }

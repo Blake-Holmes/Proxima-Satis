@@ -56,10 +56,6 @@ public class DataBase{
 
         if(search != null){
             queryMap = q.parseQuery(search);
-
-            for(String word: queryMap.keySet()){
-                System.out.println(word);
-            }
         }
         else{
             System.out.println("No query");
