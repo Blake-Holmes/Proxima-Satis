@@ -65,6 +65,9 @@ public class HomeGui extends JFrame {
             { "Add To DataBase", (Runnable) this::importDocuments },
         }) {
             GradientButton btn = new GradientButton((String) spec[0]);
+            btn.setFont(new Font("Courier New", Font.BOLD, 14));
+            btn.setPreferredSize(new Dimension(180, 46));
+            btn.setMaximumSize(new Dimension(180, 46));
             btn.setAlignmentX(Component.CENTER_ALIGNMENT);
             btn.addActionListener(e -> ((Runnable) spec[1]).run());
             sidebar.add(btn);
