@@ -1,38 +1,32 @@
-
 import javax.swing.*;
-import javax.swing.plaf.basic.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
-import java.awt.image.*;
+import java.io.*;
+import java.nio.file.*;
 import java.util.*;
-import java.util.List;
 
 public class HomeGui extends JFrame {
 
-    
-    static final Color BG_DEEP   = new Color(0x02020F);
-    static final Color CYAN      = new Color(0x00F5FF);
-    static final Color MAGENTA   = new Color(0xFF00C8);
-    static final Color GOLD      = new Color(0xFFD700);
-    static final Color DIM_CYAN  = new Color(0x003F44);
-    static final Color TEXT_MAIN = new Color(0xE0E8FF);
-    static final Color TEXT_DIM  = new Color(0x5A6080);
+    static final Color BG_DEEP  = new Color(0x02020F);
+    static final Color CYAN     = new Color(0x00FF41);
+    static final Color TEXT_DIM = new Color(0x5A6080);
 
-    static final int STAR_COUNT = 200;
-    float[] starX=new float[STAR_COUNT],starY=new float[STAR_COUNT];
-    float[] starZ=new float[STAR_COUNT],starB=new float[STAR_COUNT];
-    Random rng = new Random(42);
+    static final int    CELL    = 18;
+    static final char[] CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*<>{}[]|/\\!?".toCharArray();
 
-    BufferedImage nebulaTex;
-    float scanY=0f, pulse=0f;
-    int tick=0;
+    static final File PA_DOCS = new File("PADocs");
 
+    int      cols, rows;
+    int[]    headRow;
+    int[]    trailLen;
+    char[][] glyphs;
+    float[]  speed;
+    float[]  speedAccum;
+    Random   rng = new Random();
 
-    StarCanvas   canvas;
-    CosmicField  searchField;
-    CosmicButton searchBtn;
-    JLabel       statusLabel;
+    javax.swing.Timer animTimer;
+    BackgroundPanel   background;
 
     public HomeGui() {
         super("◈  Proxima-Satis  ◈  CORPUS SEARCH ENGINE");
@@ -40,167 +34,261 @@ public class HomeGui extends JFrame {
         setSize(980, 720);
         setMinimumSize(new Dimension(780, 540));
         setLocationRelativeTo(null);
-        for (int i=0;i<STAR_COUNT;i++) {
-            starX[i]=rng.nextFloat(); starY[i]=rng.nextFloat();
-            starZ[i]=rng.nextFloat(); starB[i]=0.3f+rng.nextFloat()*0.7f;
+        buildUI();
+        initRain(980, 720);
+        animTimer = new javax.swing.Timer(50, e -> { stepRain(); background.repaint(); });
+        animTimer.start();
+    }
+
+    void initRain(int w, int h) {
+        cols       = w / CELL + 2;
+        rows       = h / CELL + 2;
+        headRow    = new int[cols];
+        trailLen   = new int[cols];
+        speed      = new float[cols];
+        speedAccum = new float[cols];
+        glyphs     = new char[cols][rows];
+        for (int c = 0; c < cols; c++) {
+            headRow[c]  = -rng.nextInt(rows);
+            trailLen[c] = 6 + rng.nextInt(20);
+            speed[c]    = 0.6f + rng.nextFloat() * 0.8f;
+            for (int r = 0; r < rows; r++)
+                glyphs[c][r] = randomGlyph();
         }
-        buildNebula(); buildUI();
     }
 
+    char randomGlyph() {
+        return CHARSET[rng.nextInt(CHARSET.length)];
+    }
 
-
-    void buildNebula() {
-        nebulaTex = new BufferedImage(512,512,BufferedImage.TYPE_INT_ARGB);
-        for (int y=0;y<512;y++) for (int x=0;x<512;x++) {
-            float n=noise(x*0.012f,y*0.012f)+0.5f*noise(x*0.025f,y*0.025f)+0.25f*noise(x*0.05f,y*0.05f);
-            n=Math.max(0,Math.min(1,(n-0.2f)*1.4f));
-            nebulaTex.setRGB(x,y,((int)(n*110)<<24)|((int)(n*16)<<16)|((int)(n*6)<<8)|(int)(n*50));
+    void stepRain() {
+        for (int c = 0; c < cols; c++) {
+            speedAccum[c] += speed[c];
+            if (speedAccum[c] < 1f) continue;
+            speedAccum[c] -= 1f;
+            headRow[c]++;
+            int shimmerRow = headRow[c] - rng.nextInt(Math.max(1, trailLen[c]));
+            if (shimmerRow >= 0 && shimmerRow < rows)
+                glyphs[c][shimmerRow] = randomGlyph();
+            if (headRow[c] - trailLen[c] > rows) {
+                headRow[c]  = -rng.nextInt(rows / 2);
+                trailLen[c] = 6 + rng.nextInt(20);
+                speed[c]    = 0.2f + rng.nextFloat() * 0.6f;
+            }
         }
     }
 
-     float noise(float x, float y) {
-        int xi=(int)x,yi=(int)y; float xf=x-xi,yf=y-yi;
-        float a=pr(xi,yi),b=pr(xi+1,yi),c=pr(xi,yi+1),d=pr(xi+1,yi+1);
-        float u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
-        return a+u*(b-a)+v*(c-a)+u*v*(a-b-c+d);
+    void paintRain(Graphics2D g2) {
+        g2.setFont(new Font("Courier New", Font.BOLD, CELL - 2));
+        FontMetrics fm = g2.getFontMetrics();
+        int cw = fm.charWidth('M');
+        int ch = fm.getAscent();
+
+        for (int c = 0; c < cols; c++) {
+            int head = headRow[c];
+            for (int r = head - trailLen[c]; r <= head; r++) {
+                if (r < 0 || r >= rows) continue;
+                float t = (float)(r - (head - trailLen[c])) / trailLen[c];
+                Color color = (r == head)
+                    ? new Color(220, 255, 220, 255)
+                    : new Color(0, Math.min(255, (int)(40 + t * 180)), 0, Math.min(255, (int)(60 + t * 195)));
+                g2.setColor(color);
+                g2.drawString(
+                    String.valueOf(glyphs[c][r]),
+                    c * CELL + (CELL - cw) / 2,
+                    r * CELL + ch
+                );
+            }
+        }
     }
 
-
-    float pr(int x,int y){int n=x+y*57;n=(n<<13)^n;return(1f-((n*(n*n*15731+789221)+1376312589)&0x7fffffff)/1073741824f)*0.5f+0.5f;}
-
-
-
-    
     JPanel buildHeader() {
-        JPanel p=new JPanel(new BorderLayout()){
-            protected void paintComponent(Graphics g){
-                Graphics2D g2=(Graphics2D)g; g2.setColor(BG_DEEP); g2.fillRect(0,0,getWidth(),getHeight());
-                g2.setPaint(new GradientPaint(0,getHeight()-1,MAGENTA,getWidth()/2,getHeight()-1,CYAN,true));
-                g2.setStroke(new BasicStroke(1.5f)); g2.drawLine(0,getHeight()-1,getWidth(),getHeight()-1);
+        JPanel panel = new JPanel(new BorderLayout()) {
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setColor(BG_DEEP);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setPaint(new GradientPaint(
+                    0, getHeight() - 1, new Color(0x008F11),
+                    getWidth() / 2, getHeight() - 1, CYAN, true
+                ));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
             }
         };
-        p.setOpaque(false); p.setBorder(BorderFactory.createEmptyBorder(18,36,14,36));
-        JLabel t=new JLabel("◈  P R O X I M A - S A T I S" );
-        t.setFont(new Font("Courier New",Font.BOLD,26)); t.setForeground(CYAN);
-        JLabel s=new JLabel("DEEP CORPUS RETRIEVAL  //  OKAPI ENGINE");
-        s.setFont(new Font("Courier New",Font.PLAIN,11)); s.setForeground(TEXT_DIM);
-        JPanel r=new JPanel(new FlowLayout(FlowLayout.RIGHT,0,0)); r.setOpaque(false); r.add(s);
-        p.add(t,BorderLayout.WEST); p.add(r,BorderLayout.EAST); return p;
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 36, 14, 36));
+
+        JLabel title = new JLabel("◈  P R O X I M A - S A T I S");
+        title.setFont(new Font("Courier New", Font.BOLD, 26));
+        title.setForeground(CYAN);
+
+        JLabel subtitle = new JLabel("DEEP CORPUS RETRIEVAL  //  OKAPI ENGINE");
+        subtitle.setFont(new Font("Courier New", Font.PLAIN, 11));
+        subtitle.setForeground(TEXT_DIM);
+
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        right.setOpaque(false);
+        right.add(subtitle);
+
+        panel.add(title, BorderLayout.WEST);
+        panel.add(right, BorderLayout.EAST);
+        return panel;
     }
 
+    class BackgroundPanel extends JPanel {
+        BackgroundPanel() { setOpaque(true); setBackground(BG_DEEP); }
 
-    class StarCanvas extends JPanel {
-        StarCanvas(){setOpaque(true);setBackground(BG_DEEP);}
         protected void paintComponent(Graphics g) {
-            Graphics2D g2=(Graphics2D)g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-            int W=getWidth(),H=getHeight();
-            g2.setColor(BG_DEEP); g2.fillRect(0,0,W,H);
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,0.5f));
-            for(int tx=0;tx<W;tx+=512) for(int ty=0;ty<H;ty+=512) g2.drawImage(nebulaTex,tx,ty,null);
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,1f));
-            g2.setColor(new Color(0x0A0A30)); g2.setStroke(new BasicStroke(0.5f));
-            for(int x=0;x<W;x+=60) g2.drawLine(x,0,x,H);
-            for(int y=0;y<H;y+=60) g2.drawLine(0,y,W,y);
-            for(int i=0;i<STAR_COUNT;i++){
-                float z=starZ[i],sx=(starX[i]-0.5f)/z+0.5f,sy=(starY[i]-0.5f)/z+0.5f;
-                if(sx<0||sx>1||sy<0||sy>1) continue;
-                float sz=(1-z)*3.5f,al=starB[i]*(1-z)*0.9f;
-                Color sc=(i%5==0)?CYAN:(i%7==0)?MAGENTA:TEXT_MAIN;
-                g2.setColor(new Color(sc.getRed(),sc.getGreen(),sc.getBlue(),(int)(Math.min(1f,al)*220)));
-                g2.fill(new Ellipse2D.Float(sx*W-sz/2,sy*H-sz/2,sz,sz));
+            int w = getWidth(), h = getHeight();
+            if (cols != w / CELL + 2 || rows != h / CELL + 2) initRain(w, h);
+
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,      RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+            g2.setColor(BG_DEEP);
+            g2.fillRect(0, 0, w, h);
+            paintRain(g2);
+            paintCornerBrackets(g2, w, h);
+
+            g2.dispose();
+            super.paintChildren(g);
+        }
+
+        private void paintCornerBrackets(Graphics2D g2, int w, int h) {
+            int[][] corners = { {0, 0, 1, 1}, {w, 0, -1, 1}, {0, h, 1, -1}, {w, h, -1, -1} };
+            int arm = 22;
+            g2.setColor(CYAN);
+            g2.setStroke(new BasicStroke(1.5f));
+            for (int[] c : corners) {
+                g2.drawLine(c[0], c[1], c[0] + c[2] * arm, c[1]);
+                g2.drawLine(c[0], c[1], c[0],              c[1] + c[3] * arm);
             }
-            g2.setColor(new Color(0,245,255,(int)((0.06f+0.05f*pulse)*255)));
-            g2.fillRect(0,(int)scanY,W,2);
-            int L=22; int[][] cs={{0,0,1,1},{W,0,-1,1},{0,H,1,-1},{W,H,-1,-1}};
-            g2.setColor(CYAN); g2.setStroke(new BasicStroke(1.5f));
-            for(int[] c:cs){g2.drawLine(c[0],c[1],c[0]+c[2]*L,c[1]);g2.drawLine(c[0],c[1],c[0],c[1]+c[3]*L);}
-            g2.dispose(); super.paintChildren(g);
         }
     }
 
-    public class CosmicField extends JTextField {
-        boolean hov=false; final String ph;
-        public CosmicField(String ph){
-            super(ph); this.ph=ph; setOpaque(false); setBorder(BorderFactory.createEmptyBorder(10,14,10,14));
-            setFont(new Font("Courier New",Font.PLAIN,15)); setForeground(TEXT_DIM); setCaretColor(CYAN);
-            setPreferredSize(new Dimension(0,46));
-            addMouseListener(new MouseAdapter(){public void mouseEntered(MouseEvent e){hov=true;repaint();}public void mouseExited(MouseEvent e){hov=false;repaint();}});
-            addFocusListener(new FocusAdapter(){
-                public void focusGained(FocusEvent e){if(getText().equals(ph)){setText("");setForeground(TEXT_MAIN);}}
-                public void focusLost(FocusEvent e){if(getText().isEmpty()){setText(ph);setForeground(TEXT_DIM);}}
+    class GradientButton extends JButton {
+        boolean hovered = false, pressed = false;
+
+        GradientButton(String label) {
+            super(label);
+            setOpaque(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setFont(new Font("Courier New", Font.BOLD, 32));
+            setForeground(BG_DEEP);
+            setPreferredSize(new Dimension(640, 160));
+            addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent e)  { hovered = true;  repaint(); }
+                public void mouseExited(MouseEvent e)   { hovered = false; repaint(); }
+                public void mousePressed(MouseEvent e)  { pressed = true;  repaint(); }
+                public void mouseReleased(MouseEvent e) { pressed = false; repaint(); }
             });
         }
-        protected void paintComponent(Graphics g){
-            Graphics2D g2=(Graphics2D)g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-            int W=getWidth(),H=getHeight();
-            g2.setColor(new Color(0x07071A)); g2.fill(new RoundRectangle2D.Float(0,0,W,H,8,8));
-            g2.setColor(hov||isFocusOwner()?CYAN:DIM_CYAN); g2.setStroke(new BasicStroke(1.2f));
-            g2.draw(new RoundRectangle2D.Float(0.5f,0.5f,W-1,H-1,8,8));
-            if(isFocusOwner()){g2.setColor(new Color(0,245,255,18));g2.fill(new RoundRectangle2D.Float(0,0,W,H,8,8));}
-            g2.dispose(); super.paintComponent(g);
+
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth(), h = getHeight();
+            Color from = pressed ? new Color(0x008F11) : hovered ? new Color(0x006400) : CYAN;
+            Color to   = pressed ? new Color(0x006400) : hovered ? CYAN               : new Color(0x006400);
+            g2.setPaint(new GradientPaint(0, 0, from, w, h, to));
+            g2.fill(new RoundRectangle2D.Float(0, 0, w, h, 8, 8));
+            g2.setColor(new Color(255, 255, 255, 28));
+            g2.fill(new RoundRectangle2D.Float(2, 2, w - 4, (h - 4) / 2f, 6, 6));
+            g2.dispose();
+            super.paintComponent(g);
         }
     }
 
-     class CosmicButton extends JButton {
-        boolean hov=false,prs=false;
-        CosmicButton(String t){
+    void searchDatabase() {
+        System.out.println("[placeholder] Search DataBase clicked");
+    }
 
-            super(t); setOpaque(false); setContentAreaFilled(false); setBorderPainted(false); setFocusPainted(false);
-            setFont(new Font("Courier New",Font.BOLD,13)); setForeground(BG_DEEP); setPreferredSize(new Dimension(200,60));
-            addMouseListener(new MouseAdapter(){
-                public void mouseEntered(MouseEvent e){hov=true;repaint();}public void mouseExited(MouseEvent e){hov=false;repaint();}
-                public void mousePressed(MouseEvent e){prs=true;repaint();}public void mouseReleased(MouseEvent e){prs=false;repaint();}
-            });
+    void viewDatabase() {
+        System.out.println("[placeholder] View DataBase clicked");
+    }
+
+    void importDocuments() {
+        if (!PA_DOCS.exists()) PA_DOCS.mkdirs();
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select Documents to Add  →  PADocs");
+        chooser.setMultiSelectionEnabled(true);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
+
+        int           copied = 0, failed = 0;
+        StringBuilder log    = new StringBuilder();
+
+        for (File src : chooser.getSelectedFiles()) {
+            File dest = resolveDestination(src);
+            try {
+                Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                ingestFile(dest);
+                log.append("  ✔  ").append(dest.getName()).append("\n");
+                copied++;
+            } catch (IOException ex) {
+                log.append("  ✘  ").append(src.getName()).append("  (").append(ex.getMessage()).append(")\n");
+                failed++;
+            }
         }
-        protected void paintComponent(Graphics g){
-            Graphics2D g2=(Graphics2D)g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-            int W=getWidth(),H=getHeight();
-            Color c1=prs?MAGENTA:hov?new Color(0x00CCDD):CYAN;
-            Color c2=prs?new Color(0xAA0088):hov?CYAN:new Color(0x0099BB);
-            g2.setPaint(new GradientPaint(0,0,c1,W,H,c2));
-            g2.fill(new RoundRectangle2D.Float(0,0,W,H,8,8));
-            g2.setColor(new Color(255,255,255,28));
-            g2.fill(new RoundRectangle2D.Float(2,2,W-4,(H-4)/2,6,6));
-            g2.dispose(); super.paintComponent(g);
-        }
+
+        String summary = copied + " file(s) added to PADocs"
+            + (failed > 0 ? ", " + failed + " failed" : "") + ":\n\n" + log;
+        JOptionPane.showMessageDialog(this, summary, "PADocs — Import Complete", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    File resolveDestination(File src) {
+        File   dest  = new File(PA_DOCS, src.getName());
+        if (!dest.exists()) return dest;
+        String name  = src.getName();
+        int    dot   = name.lastIndexOf('.');
+        String base  = dot >= 0 ? name.substring(0, dot) : name;
+        String ext   = dot >= 0 ? name.substring(dot)    : "";
+        int    count = 1;
+        while (dest.exists()) dest = new File(PA_DOCS, base + "_" + count++ + ext);
+        return dest;
+    }
+
+    void ingestFile(File file) {
+        System.out.println("[placeholder] Ingesting into database: " + file.getAbsolutePath());
     }
 
     void buildUI() {
-        canvas=new StarCanvas(); setContentPane(canvas); canvas.setLayout(new BorderLayout());
-        canvas.add(buildHeader(),BorderLayout.NORTH);
-        JPanel center=new JPanel(new GridBagLayout());
-        center.setOpaque(false); center.setBorder(BorderFactory.createEmptyBorder(10,36,10,36));
+        background = new BackgroundPanel();
+        setContentPane(background);
+        background.setLayout(new BorderLayout());
+        background.add(buildHeader(), BorderLayout.NORTH);
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS)); // Stack buttons vertically
-        buttonPanel.setOpaque(false);
+        JPanel buttons = new JPanel();
+        buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
+        buttons.setOpaque(false);
 
-        buttonPanel.add(new CosmicButton("Search DataBase"));
-        buttonPanel.add(new CosmicButton("View DataBase"));
-        buttonPanel.add(new CosmicButton("Add To DataBase"));
-
-        buttonPanel.add(Box.createVerticalStrut(50));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.NORTH;
-
-        center.add(buttonPanel, gbc);  // Add the button panel
-
-
-
-        canvas.add(center, BorderLayout.CENTER);
+        for (Object[] spec : new Object[][] {
+            { "Search DataBase", (Runnable) this::searchDatabase  },
+            { "View DataBase",   (Runnable) this::viewDatabase    },
+            { "Add To DataBase", (Runnable) this::importDocuments },
+        }) {
+            GradientButton btn = new GradientButton((String) spec[0]);
+            btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            btn.addActionListener(e -> ((Runnable) spec[1]).run());
+            buttons.add(btn);
+            buttons.add(Box.createVerticalStrut(16));
         }
+        buttons.add(Box.createVerticalStrut(34));
 
-
-    public static void main(String[] args) {
-        try{UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());}catch(Exception ignored){}
-        SwingUtilities.invokeLater(()->new HomeGui().setVisible(true));
+        JPanel center = new JPanel(new GridBagLayout());
+        center.setOpaque(false);
+        center.setBorder(BorderFactory.createEmptyBorder(10, 36, 10, 36));
+        center.add(buttons, new GridBagConstraints());
+        background.add(center, BorderLayout.CENTER);
     }
 
-
+    public static void main(String[] args) {
+        try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); } catch (Exception ignored) {}
+        SwingUtilities.invokeLater(() -> new HomeGui().setVisible(true));
+    }
 }
