@@ -49,27 +49,25 @@ public class Tokenizer {
         pruneLexicon();
     }
 
-     public HashMap<String,Integer> parseQuery(String query) throws IOException {
-        String line = query;
-        HashMap<String,Integer> queryMap = new HashMap<String,Integer>();
+    public HashMap<String, Integer> parseQuery(String query) {
+        HashMap<String, Integer> queryMap = new HashMap<>();
+           System.out.println(query);
+        if (query != null && !query.trim().isEmpty()) {
+            System.out.println(query);
+            String[] tokens = query.split("\\s+");
 
-        if(query != null){
-            String[] tokens = line.split("\\s+");
-            String cleanLine = "";
-            for (String token : tokens) {
-                token = clean(token);
-                if (isValidToken(token)) {
-                    queryMap.put(token, lexicon.getOrDefault(token, 0) + 1);
-                    cleanLine += token + " ";
+        for (String token : tokens) {
+            System.out.println(token);
+            token = clean(token);
+            if (isValidToken(token)) {
+                System.out.println(token);
+                queryMap.put(token, queryMap.getOrDefault(token, 0) + 1);
                 }
             }
-
         }
-
 
         return queryMap;
     }
-
 
     private String clean(String token) {
         return token.toLowerCase().replaceAll("[^a-z0-9]", "").trim();
