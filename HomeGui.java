@@ -132,7 +132,7 @@ public class HomeGui extends JFrame {
 
     void doSearch() {
         String query = searchField.getText().trim();
-        if (query.isEmpty() || query.equals("ENTER QUERY VECTOR...")) return;
+        if (query.isEmpty() || query.equals("ENTER QUERY...")) return;
         if (db == null) {
             statusLabel.setForeground(CYAN_DIM);
             statusLabel.setText("DATABASE STILL LOADING — PLEASE WAIT...");
