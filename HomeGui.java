@@ -28,6 +28,14 @@ public class HomeGui extends JFrame {
     javax.swing.Timer animTimer;
     BackgroundPanel   background;
 
+    void searchDatabase() {
+        System.out.println("[placeholder] Search DataBase clicked");
+    }
+
+    void viewDatabase() {
+        System.out.println("[placeholder] View DataBase clicked");
+    }
+
     public HomeGui() {
         super("◈  Proxima-Satis  ◈  CORPUS SEARCH ENGINE");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -201,14 +209,6 @@ public class HomeGui extends JFrame {
             g2.dispose();
             super.paintComponent(g);
         }
-    }
-
-    void searchDatabase() {
-        System.out.println("[placeholder] Search DataBase clicked");
-    }
-
-    void viewDatabase() {
-        System.out.println("[placeholder] View DataBase clicked");
     }
 
     void importDocuments() {
