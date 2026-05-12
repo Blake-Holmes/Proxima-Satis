@@ -17,17 +17,14 @@ public class HomeGui extends JFrame {
 
     static final File PA_DOCS = new File("PADocs");
 
-    int      cols, rows;
-    int[]    headRow;
-    int[]    trailLen;
-    char[][] glyphs;
-    float[]  speed;
-    float[]  speedAccum;
-    Random   rng = new Random();
-
     javax.swing.Timer animTimer;
     BackgroundPanel   background;
 
+    public static void main(String[] args) {
+        try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); } catch (Exception ignored) {}
+        SwingUtilities.invokeLater(() -> new HomeGui().setVisible(true));
+    }
+    //actions
     void searchDatabase() {
         System.out.println("[placeholder] Search DataBase clicked");
     }
@@ -47,6 +44,94 @@ public class HomeGui extends JFrame {
         animTimer = new javax.swing.Timer(50, e -> { stepRain(); background.repaint(); });
         animTimer.start();
     }
+
+    //UI construction
+
+    void buildUI() {
+        background = new BackgroundPanel();
+        setContentPane(background);
+        background.setLayout(new BorderLayout());
+        background.add(buildHeader(), BorderLayout.NORTH);
+
+        JPanel buttons = new JPanel();
+        buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
+        buttons.setOpaque(false);
+
+        for (Object[] spec : new Object[][] {
+            { "Search DataBase", (Runnable) this::searchDatabase  },
+            { "View DataBase",   (Runnable) this::viewDatabase    },
+            { "Add To DataBase", (Runnable) this::importDocuments },
+        }) {
+            GradientButton btn = new GradientButton((String) spec[0]);
+            btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            btn.addActionListener(e -> ((Runnable) spec[1]).run());
+            buttons.add(btn);
+            buttons.add(Box.createVerticalStrut(16));
+        }
+        buttons.add(Box.createVerticalStrut(34));
+
+        JPanel center = new JPanel(new GridBagLayout());
+        center.setOpaque(false);
+        center.setBorder(BorderFactory.createEmptyBorder(10, 36, 10, 36));
+        center.add(buttons, new GridBagConstraints());
+        background.add(center, BorderLayout.CENTER);
+    }
+
+    void importDocuments() {
+        if (!PA_DOCS.exists()) PA_DOCS.mkdirs();
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select Documents to Add  →  PADocs");
+        chooser.setMultiSelectionEnabled(true);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
+
+        int           copied = 0, failed = 0;
+        StringBuilder log    = new StringBuilder();
+
+        for (File src : chooser.getSelectedFiles()) {
+            File dest = resolveDestination(src);
+            try {
+                Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                ingestFile(dest);
+                log.append("  ✔  ").append(dest.getName()).append("\n");
+                copied++;
+            } catch (IOException ex) {
+                log.append("  ✘  ").append(src.getName()).append("  (").append(ex.getMessage()).append(")\n");
+                failed++;
+            }
+        }
+
+        String summary = copied + " file(s) added to PADocs"
+            + (failed > 0 ? ", " + failed + " failed" : "") + ":\n\n" + log;
+        JOptionPane.showMessageDialog(this, summary, "PADocs — Import Complete", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    File resolveDestination(File src) {
+        File   dest  = new File(PA_DOCS, src.getName());
+        if (!dest.exists()) return dest;
+        String name  = src.getName();
+        int    dot   = name.lastIndexOf('.');
+        String base  = dot >= 0 ? name.substring(0, dot) : name;
+        String ext   = dot >= 0 ? name.substring(dot)    : "";
+        int    count = 1;
+        while (dest.exists()) dest = new File(PA_DOCS, base + "_" + count++ + ext);
+        return dest;
+    }
+
+    void ingestFile(File file) {
+        System.out.println("[placeholder] Ingesting into database: " + file.getAbsolutePath());
+    }
+
+    //matrix rain
+
+    int      cols, rows;
+    int[]    headRow;
+    int[]    trailLen;
+    char[][] glyphs;
+    float[]  speed;
+    float[]  speedAccum;
+    Random   rng = new Random();
 
     void initRain(int w, int h) {
         cols       = w / CELL + 2;
@@ -96,19 +181,17 @@ public class HomeGui extends JFrame {
             int head = headRow[c];
             for (int r = head - trailLen[c]; r <= head; r++) {
                 if (r < 0 || r >= rows) continue;
-                float t = (float)(r - (head - trailLen[c])) / trailLen[c];
+                float t     = (float)(r - (head - trailLen[c])) / trailLen[c];
                 Color color = (r == head)
                     ? new Color(220, 255, 220, 255)
                     : new Color(0, Math.min(255, (int)(40 + t * 180)), 0, Math.min(255, (int)(60 + t * 195)));
                 g2.setColor(color);
-                g2.drawString(
-                    String.valueOf(glyphs[c][r]),
-                    c * CELL + (CELL - cw) / 2,
-                    r * CELL + ch
-                );
+                g2.drawString(String.valueOf(glyphs[c][r]), c * CELL + (CELL - cw) / 2, r * CELL + ch);
             }
         }
     }
+
+    // ── Widgets ───────────────────────────────────────────────────────────────
 
     JPanel buildHeader() {
         JPanel panel = new JPanel(new BorderLayout()) {
@@ -209,86 +292,5 @@ public class HomeGui extends JFrame {
             g2.dispose();
             super.paintComponent(g);
         }
-    }
-
-    void importDocuments() {
-        if (!PA_DOCS.exists()) PA_DOCS.mkdirs();
-
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Select Documents to Add  →  PADocs");
-        chooser.setMultiSelectionEnabled(true);
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
-
-        int           copied = 0, failed = 0;
-        StringBuilder log    = new StringBuilder();
-
-        for (File src : chooser.getSelectedFiles()) {
-            File dest = resolveDestination(src);
-            try {
-                Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                ingestFile(dest);
-                log.append("  ✔  ").append(dest.getName()).append("\n");
-                copied++;
-            } catch (IOException ex) {
-                log.append("  ✘  ").append(src.getName()).append("  (").append(ex.getMessage()).append(")\n");
-                failed++;
-            }
-        }
-
-        String summary = copied + " file(s) added to PADocs"
-            + (failed > 0 ? ", " + failed + " failed" : "") + ":\n\n" + log;
-        JOptionPane.showMessageDialog(this, summary, "PADocs — Import Complete", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    File resolveDestination(File src) {
-        File   dest  = new File(PA_DOCS, src.getName());
-        if (!dest.exists()) return dest;
-        String name  = src.getName();
-        int    dot   = name.lastIndexOf('.');
-        String base  = dot >= 0 ? name.substring(0, dot) : name;
-        String ext   = dot >= 0 ? name.substring(dot)    : "";
-        int    count = 1;
-        while (dest.exists()) dest = new File(PA_DOCS, base + "_" + count++ + ext);
-        return dest;
-    }
-
-    void ingestFile(File file) {
-        System.out.println("[placeholder] Ingesting into database: " + file.getAbsolutePath());
-    }
-
-    void buildUI() {
-        background = new BackgroundPanel();
-        setContentPane(background);
-        background.setLayout(new BorderLayout());
-        background.add(buildHeader(), BorderLayout.NORTH);
-
-        JPanel buttons = new JPanel();
-        buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
-        buttons.setOpaque(false);
-
-        for (Object[] spec : new Object[][] {
-            { "Search DataBase", (Runnable) this::searchDatabase  },
-            { "View DataBase",   (Runnable) this::viewDatabase    },
-            { "Add To DataBase", (Runnable) this::importDocuments },
-        }) {
-            GradientButton btn = new GradientButton((String) spec[0]);
-            btn.setAlignmentX(Component.CENTER_ALIGNMENT);
-            btn.addActionListener(e -> ((Runnable) spec[1]).run());
-            buttons.add(btn);
-            buttons.add(Box.createVerticalStrut(16));
-        }
-        buttons.add(Box.createVerticalStrut(34));
-
-        JPanel center = new JPanel(new GridBagLayout());
-        center.setOpaque(false);
-        center.setBorder(BorderFactory.createEmptyBorder(10, 36, 10, 36));
-        center.add(buttons, new GridBagConstraints());
-        background.add(center, BorderLayout.CENTER);
-    }
-
-    public static void main(String[] args) {
-        try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); } catch (Exception ignored) {}
-        SwingUtilities.invokeLater(() -> new HomeGui().setVisible(true));
     }
 }
