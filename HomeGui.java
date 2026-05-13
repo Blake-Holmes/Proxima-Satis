@@ -76,6 +76,7 @@ public class HomeGui extends JFrame {
         for (Object[] spec : new Object[][] {
             { "View DataBase",   (Runnable) this::viewDatabase    },
             { "Add To DataBase", (Runnable) this::importDocuments },
+            { "Clear DataBase",  (Runnable) this::clearDatabase    },
         }) {
             GradientButton btn = new GradientButton((String) spec[0]);
             btn.setFont(new Font("Courier New", Font.BOLD, 14));
@@ -161,6 +162,28 @@ public class HomeGui extends JFrame {
                 }
             }
         }.execute();
+    }
+
+    void clearDatabase(){
+       File dir = new File("myDirectory");
+        if (deleteFolder(dir)) {
+            System.out.println("Directory deleted successfully.");
+            db = new DataBase();
+        }
+    }
+
+    private boolean deleteFolder(File dir) {
+        File[] files = PA_DOCS.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    deleteFolder(f);
+                } else {
+                    f.delete();
+                }
+            }
+        }
+        return PA_DOCS.delete();
     }
 
     void viewDatabase() {
