@@ -21,16 +21,14 @@ public class HomeGui extends JFrame {
 
     static final File PA_DOCS = new File("PADocs");
 
-    javax.swing.Timer animTimer;
-    BackgroundPanel   background;
+    javax.swing.Timer   animTimer;
+    BackgroundPanel     background;
 
-    PlaceholderField searchField;
-    ResultsPanel     resultsPanel;
-    JLabel           statusLabel;
+    PlaceholderField    searchField;
+    ResultsPanel        resultsPanel;
+    JLabel              statusLabel;
 
-    DataBase db;
-
-    // ── Entry point ───────────────────────────────────────────────────────────
+    DataBase            db;
 
     public static void main(String[] args) {
         try { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); } catch (Exception ignored) {}
@@ -527,16 +525,50 @@ public class HomeGui extends JFrame {
         ResultRow row;
         int       rank;
         float     maxScore;
+        File      file;
 
         ResultCard(ResultRow row, int rank, float maxScore) {
+            this.file = new File(row.title);
             this.row = row; this.rank = rank; this.maxScore = maxScore;
             setOpaque(false);
             setMaximumSize(new Dimension(Integer.MAX_VALUE, 72));
             setPreferredSize(new Dimension(100, 72));
             setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
             addMouseListener(new MouseAdapter() {
-                public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
-                public void mouseExited(MouseEvent e)  { hovered = false; repaint(); }
+                public void mouseEntered(MouseEvent e) { 
+                    hovered = true;  
+                    repaint(); 
+                }
+                public void mouseExited(MouseEvent e)  { 
+                    hovered = false; 
+                    repaint(); 
+                }
+                public void mouseClicked(MouseEvent e) {
+                   try {
+                        File file = new File(PA_DOCS, row.title);
+
+                        if (file.exists()) {
+                        Desktop.getDesktop().open(file);
+                        } else {
+                        JOptionPane.showMessageDialog(
+                        ResultCard.this,
+                        "File not found:\n" + file.getAbsolutePath(),
+                        "Open Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+
+                    JOptionPane.showMessageDialog(
+                    ResultCard.this,
+                    "Could not open file:\n" + ex.getMessage(),
+                    "Open Error",
+                    JOptionPane.ERROR_MESSAGE
+                    );
+                }
+                }
             });
         }
 
