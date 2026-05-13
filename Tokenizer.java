@@ -97,9 +97,13 @@ public class Tokenizer {
         int k = 50000;
         PriorityQueue<HashMap.Entry<String, Integer>> heap = new PriorityQueue<>((a, b) -> a.getValue() - b.getValue());
         for (HashMap.Entry<String, Integer> entry : lexicon.entrySet()) {
-            if (entry.getValue() < 5) {
+           /* if (entry.getValue() < 2) {
+                System.out.println("Pruned: " + entry.getKey());
                 continue;
             }
+
+            */ //could be nessicary if doc content size too big
+            // with smaller documents we are using helps with search
             if (heap.size() < k) {
                 heap.add(entry);
             } else if (entry.getValue() > heap.peek().getValue()) {

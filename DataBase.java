@@ -168,8 +168,8 @@ public class DataBase{
             return 0.0;
         }
         double termFreq = invertedIndex.get(term).get(document);
-        double k1 = 1.0;
-        double b = 1.0;
+        double k1 = 1.5;
+        double b = .75;
         double avgDocLength = totalCharacter/numDoc;
 
 
