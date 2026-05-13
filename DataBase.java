@@ -1,4 +1,3 @@
-
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,10 +18,6 @@ public class DataBase{
     HashMap<String, Float> tf;
     static int numDoc;
     static int totalCharacter;
-
-
-
-
 
     public DataBase(){
 
@@ -49,7 +44,6 @@ public class DataBase{
         }
     }
 
-
     public void getQuery(String search) throws IOException{
         Tokenizer q = new Tokenizer();
         HashMap<String, Integer> queryMap = new HashMap<String, Integer>();
@@ -73,9 +67,6 @@ public class DataBase{
             query[i] = word;
             i++;
         }
-
-
-
     }
 
     public void buildDataBase() throws IOException{
@@ -99,14 +90,9 @@ public class DataBase{
                         e.printStackTrace();
                     }
 
+                }   
             }
         }
-
-
-        }
-
-
-
 
     }
 
@@ -114,11 +100,9 @@ public class DataBase{
 
         invertedIndex = new HashMap<String, HashMap<String, Integer>>();
 
-
         for(String docEntry: tokenMap.keySet()){
             String docId = docEntry;
             HashMap<String, Integer> termFreq = tokenMap.get(docEntry);
-
 
             for(String term: termFreq.keySet()){
 
@@ -128,39 +112,21 @@ public class DataBase{
                     .computeIfAbsent(term, k -> new HashMap<>())
                     .put(docId, tf);
             }
-
-
         }
-
-
     }
 
-
     public static double getIDF(String term){
-
         // total number of docs
         double N = numDoc;
-
         //number of documents containing term
         double dTerm = 0;
         if(invertedIndex.get(term) != null){
 
             dTerm = invertedIndex.get(term).size();
-
         }
-
-
-
-
         double idf = Math.log((N-dTerm +.5) / (dTerm + .5) + 1);
-
-
-
         return idf;
-
-
     }
-
 
     public double getTF(String term, String document){
 
@@ -181,28 +147,19 @@ public class DataBase{
 
                 docLength += docMap.get(word);
         }
-
-
         double tf = (termFreq)/(termFreq + (k1 * (1 - b + b * (docLength/avgDocLength))));
-
         return tf;
-
     }
-
 
     public HashMap<String, Double> conductSearch(){
 
-
     //get getIDF
     HashMap<String, Double> idfs = new HashMap<String, Double>();
-
 
     for(String word: query){
         //System.out.println("Word: " + word + " Idf: " + getIDF(word));
         idfs.put(word,getIDF(word));
     }
-
-
     //getTfs
     HashMap<String, HashMap<String, Double>> docQTF = new HashMap<String, HashMap<String, Double>>();
 
@@ -213,11 +170,9 @@ public class DataBase{
         for(String queryWord: query){
 
             tf.put(queryWord, getTF(queryWord, document));
-
         }
 
         docQTF.put(document, tf);
-
     }
 
     //calculate scores
@@ -242,11 +197,7 @@ public class DataBase{
         }
 
         Scores.put(document, score);
-
-
-
     }
-
 
     for (String document : Scores.keySet()) {
     System.out.println("Document: " + document + ", Score: " + Scores.get(document));
@@ -256,14 +207,7 @@ public class DataBase{
 
     }
 
-
-
-
-
     public static void main(String[] args) throws IOException {
-
-
-
         DataBase data = new DataBase();
         data.getQuery(args[0]);
         data.conductSearch();

@@ -62,7 +62,7 @@ public class HomeGui extends JFrame {
         }.execute();
     }
 
-    // ── UI construction ───────────────────────────────────────────────────────
+    //UI construction
 
     void buildUI() {
         background = new BackgroundPanel();
@@ -128,7 +128,7 @@ public class HomeGui extends JFrame {
         return panel;
     }
 
-    // ── Actions ───────────────────────────────────────────────────────────────
+    //Actions
 
     void doSearch() {
         String query = searchField.getText().trim();
@@ -220,6 +220,7 @@ public class HomeGui extends JFrame {
         String summary = copied + " file(s) added to PADocs"
             + (failed > 0 ? ", " + failed + " failed" : "") + ":\n\n" + log;
         JOptionPane.showMessageDialog(this, summary, "PADocs — Import Complete", JOptionPane.INFORMATION_MESSAGE);
+        db = new DataBase();
     }
 
     File resolveDestination(File src) {
@@ -248,7 +249,7 @@ public class HomeGui extends JFrame {
         }
     }
 
-    // ── Matrix rain ───────────────────────────────────────────────────────────
+    //Matrix rain
 
     int      cols, rows;
     int[]    headRow;
@@ -315,7 +316,7 @@ public class HomeGui extends JFrame {
         }
     }
 
-    // ── Widgets ───────────────────────────────────────────────────────────────
+    //Widgets
 
     JPanel buildHeader() {
         JPanel panel = new JPanel(new BorderLayout()) {
