@@ -1,0 +1,54 @@
+HOW THE INTERNET WORKS: A JOURNEY FROM YOUR SCREEN TO THE WORLD
+================================================================
+
+The internet is the largest and most complex machine ever built by human beings. Every day, billions of people use it to send messages, stream videos, conduct commerce, share knowledge, and communicate across the globe — most without any understanding of the extraordinary infrastructure that makes it possible. When you open a browser and type a web address, you set in motion a cascade of events involving underground cables, satellites, data centers, and countless invisible protocols — all completing within fractions of a second. Understanding how it works reveals both the elegance and the fragility of the system on which modern civilization has come to depend.
+
+THE FOUNDATIONS: PACKETS AND PROTOCOLS
+
+At the most fundamental level, the internet works by breaking data into small chunks called packets and routing them independently across a network of interconnected computers. This approach, called packet switching, was a revolutionary idea when it emerged in the 1960s.
+
+The earlier paradigm for long-distance communication was circuit switching, as used in telephone networks. When you made a phone call, a dedicated circuit was established between you and the other person, and it remained open for the duration of the call. This was reliable but wasteful — the circuit was reserved even during silences.
+
+Packet switching works differently. Data — whether an email, a video, or a web page — is broken into small packets, each typically around 1,500 bytes. Each packet is labeled with a destination address and a sequence number (so the recipient can reassemble them in order) and sent independently into the network. Different packets from the same message might travel completely different routes across the globe, depending on which paths are available and efficient at any moment. They reassemble at the destination. If a packet is lost or corrupted, only that packet needs to be resent — not the entire message.
+
+The protocols that govern how this happens are standardized globally. The most important are TCP (Transmission Control Protocol) and IP (Internet Protocol), often referred to together as TCP/IP. IP governs addressing and routing — making sure packets know where they're going. TCP governs the reliable delivery of data — checking that all packets arrived and requesting any missing ones.
+
+IP ADDRESSES AND THE DOMAIN NAME SYSTEM
+
+Every device connected to the internet has a unique numerical address called an IP address. In the current widely used version (IPv4), these are 32-bit numbers written as four groups of digits separated by dots — for example, 192.168.1.1. Because 32 bits can only accommodate about 4.3 billion unique addresses, and the internet has grown far beyond that, a newer standard (IPv6) uses 128-bit addresses and can accommodate an astronomically large number of devices.
+
+Obviously, humans don't navigate the internet using raw IP addresses. Instead, we use domain names — human-readable labels like "google.com" or "wikipedia.org." The translation between domain names and IP addresses is handled by the Domain Name System, or DNS.
+
+When you type a web address into your browser, your computer first contacts a DNS resolver (usually operated by your internet service provider, or a public service like Google's 8.8.8.8) to look up the IP address associated with that domain name. This lookup involves a hierarchical chain: root name servers, top-level domain servers (for .com, .org, etc.), and finally the authoritative name server for the specific domain. The process typically takes only milliseconds.
+
+FROM YOUR DEVICE TO THE DESTINATION: ROUTING
+
+Once your computer has the destination IP address, it sends your data packets out through a series of interconnected devices called routers. A router's job is simple in concept: examine the destination address of each incoming packet and forward it toward its destination along the best available path.
+
+Your data first travels from your device to a local router (like your home Wi-Fi router), then to your Internet Service Provider (ISP), and from there into the larger internet. The internet's backbone consists of high-capacity fiber-optic cables that span continents and even ocean floors. These submarine cables are marvels of engineering — thousands of miles of hair-thin glass fiber sheathed in layers of protective material, lying at the bottom of the sea. About 95% of intercontinental internet traffic travels through these undersea cables, not through satellites.
+
+Along the way, your data passes through potentially dozens of routers operated by different organizations. Each router consults a routing table — essentially a map of the internet — to decide which direction to send each packet. These routing tables are constantly updated through protocols like BGP (Border Gateway Protocol), which allows networks to advertise their connectivity to each other.
+
+HTTP, HTTPS, AND THE WORLD WIDE WEB
+
+Once your data reaches the destination server, application-layer protocols take over. The web specifically uses HTTP (Hypertext Transfer Protocol) or its secure version, HTTPS. When your browser requests a web page, it sends an HTTP GET request to the server. The server responds with the content — HTML, CSS, JavaScript, images, and other resources — which your browser then assembles into the page you see.
+
+HTTPS adds a crucial security layer through TLS (Transport Layer Security). Before any web content is exchanged, your browser and the server perform a "handshake" in which they verify each other's identities using digital certificates and agree on an encryption method. All subsequent data is encrypted, so even if someone intercepts your packets in transit, they can't read the contents. The padlock icon in your browser's address bar indicates this protection is in place.
+
+THE WEB AND THE INTERNET ARE NOT THE SAME
+
+Many people use "the internet" and "the web" interchangeably, but they are distinct things. The internet is the underlying global network of interconnected computers. The World Wide Web is one application that runs on top of the internet — specifically, the system of interlinked hypertext documents accessible through web browsers. Email, video calls, online gaming, streaming services, and many other applications also run on the internet but are not part of the web.
+
+The web was invented by British computer scientist Tim Berners-Lee at CERN in 1989. He proposed a system for sharing information among researchers using hyperlinks — references in one document that point to other documents. His invention of HTML (the language for creating web pages), HTTP (the protocol for requesting and delivering them), and URL (the system of web addresses) created the fundamental architecture of the web as we know it.
+
+DATA CENTERS: THE INTERNET'S PHYSICAL INFRASTRUCTURE
+
+Behind every website and online service is a data center — a facility housing thousands or tens of thousands of servers (powerful computers that store and process data). Major tech companies like Google, Amazon, and Microsoft operate vast global networks of data centers. When you stream a video, for example, the data likely travels from a data center sometimes thousands of miles away, racing through fiber-optic cables at close to the speed of light.
+
+Content Delivery Networks (CDNs) help solve the problem of distance by caching copies of popular content on servers distributed around the world. Instead of streaming from a single origin server, your data comes from the nearest CDN server — reducing latency and improving speed.
+
+THE INTERNET'S FUTURE
+
+The internet continues to evolve rapidly. The growth of the Internet of Things (IoT) — smart devices from thermostats to industrial sensors — is adding billions of new connected devices. 5G wireless networks promise dramatically higher speeds and lower latency for mobile connections. Edge computing aims to process more data closer to the end user, reducing dependence on distant data centers.
+
+The internet has transformed every aspect of human society in the span of a few decades. Understanding its architecture — even in broad terms — fosters greater appreciation for both its remarkable capabilities and the vulnerabilities that must be carefully managed in an increasingly connected world.
