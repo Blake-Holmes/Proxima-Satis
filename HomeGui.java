@@ -178,6 +178,7 @@ public class HomeGui extends JFrame {
             if (deleteFolder(dir)) {
             System.out.println("Directory deleted successfully.");
             db = new DataBase();
+            db.numDoc = 0;
             }
         } else {
             System.out.println("User clicked No or closed the dialog. Cancel deletion.");
@@ -204,7 +205,7 @@ public class HomeGui extends JFrame {
             return;
         }
         StringBuilder sb = new StringBuilder();
-        sb.append("INDEXED DOCUMENTS (").append(DataBase.numDoc).append(" total)\n");
+        sb.append("INDEXED DOCUMENTS (").append(DataBase.numDoc/2).append(" total)\n");
         for (int i = 0; i < 60; i++) {
             sb.append("─");
         }
