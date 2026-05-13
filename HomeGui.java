@@ -166,9 +166,21 @@ public class HomeGui extends JFrame {
 
     void clearDatabase(){
        File dir = new File("myDirectory");
-        if (deleteFolder(dir)) {
+       
+        int response = JOptionPane.showConfirmDialog(
+            null,
+            "Are you sure you want to delete this folder and all its contents?",
+            "Confirm Delete",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
+        if (response == JOptionPane.YES_OPTION) {
+            if (deleteFolder(dir)) {
             System.out.println("Directory deleted successfully.");
             db = new DataBase();
+            }
+        } else {
+            System.out.println("User clicked No or closed the dialog. Cancel deletion.");
         }
     }
 
